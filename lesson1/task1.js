@@ -7,15 +7,15 @@ function isValidBase(value) {
 }
 
 function convertNumberToBase(number, base) {
-  return parseFloat(number).toString(parseInt(base));
+  return parseFloat(number).toString( parseInt(base) );
 }
 
-let number = prompt("Введите число:");
-let base = prompt("Введите основание системы счисления (между 2 и 36):");
+let number = prompt('Введите число:');
+let base = prompt('Введите основание системы счисления (между 2 и 36):');
 
 if (isValidNumber(number) && isValidBase(base)) {
   const result = convertNumberToBase(number, base);
   console.log(result);
 } else {
-  console.log("Некорректный ввод!");
+  console.log('Некорректный ввод!');
 }
