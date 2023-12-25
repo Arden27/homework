@@ -13,7 +13,7 @@ function convertNumberToBase(number, base) {
 let number = prompt('Введите число:');
 let base = prompt('Введите основание системы счисления (между 2 и 36):');
 
-if (isValidNumber(number) && isValidBase(base)) {
+if ( isValidNumber(number) && isValidBase(base) ) {
   const result = convertNumberToBase(number, base);
   console.log(result);
 } else {
