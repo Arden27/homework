@@ -8,7 +8,7 @@ function isValidData(array, a, b) {
 
 function selectFromInterval(array, a, b) {
 	if (!isValidData(array, a, b)) {
-		throw Error('Ошибка!');
+		throw Error('Неправильные входные данные');
 	}
 
 	if (a > b) {
@@ -18,7 +18,7 @@ function selectFromInterval(array, a, b) {
 	let filteredArray = [];
 	for (const item of array) {
 		if (!isValidNumber(item)) {
-			throw new Error('Ошибка');
+			throw new Error('Все элементы массива должны быть числами');
 		}
 		if (item >= a && item <= b) {
 			filteredArray.push(item);
