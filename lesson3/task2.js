@@ -1,7 +1,7 @@
 function createDebounceFunction(callbackFn, milliseconds) {
 	let timer;
 
-	return function () {
+	return function() {
 		clearTimeout(timer);
 
 		timer = setTimeout(() => {
