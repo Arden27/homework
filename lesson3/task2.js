@@ -1,11 +1,11 @@
 function createDebounceFunction(callbackFn, milliseconds) {
-  let timer;
+	let timer;
 
-  return function() {
-    clearTimeout(timer);
+	return function () {
+		clearTimeout(timer);
 
-    timer = setTimeout(() => {
-      callbackFn();
-    }, milliseconds)
-  };
+		timer = setTimeout(() => {
+			callbackFn();
+		}, milliseconds);
+	};
 }
