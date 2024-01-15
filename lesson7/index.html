@@ -10,9 +10,12 @@
 		<div class="bg-white shadow-xl rounded-lg overflow-hidden" style="width: 375px">
 			<!-- Display -->
 			<div class="p-4 border-b">
-				<div id="display" class="text-right text-2xl">0</div>
-				<div class="text-right text-sm">M: 0</div>
-				<div id="test" class="text-right text-sm"></div>
+				<div id="main-display" class="text-right text-2xl">0</div>
+				<div class="w-full bg-yellow-300 items-right justify-right text-sm flex flex-row">
+					<div class="text-right">M:</div>
+					<div id="memory-display" class="align-self-right text-right text-sm">0</div>
+				</div>
+				<div id="history-display" class="text-right text-sm"></div>
 			</div>
 			<!-- Buttons -->
 			<div id="calculator-buttons" class="grid grid-cols-5 gap-2 p-4">
@@ -49,15 +52,12 @@
 
 			<script>
 				const buttonsContainer = document.getElementById('calculator-buttons');
-				const displayResultElement = document.getElementById('display');
-				const testDisplay = document.getElementById('test');
+				const mainDisplay = document.getElementById('main-display');
+				const historyDisplay = document.getElementById('history-display');
+				const memoryDisplay = document.getElementById('memory-display');
 
-				let storedValue = '0';
-				let currentValue = '';
-				let currentOperator = '';
-				let currentResult = '';
-				const currentOperation = {
-					a: '',
+				const currOperation = {
+					a: '0',
 					b: '',
 					operator: '',
 					result: '',
@@ -68,146 +68,267 @@
 					operator: '',
 					result: '',
 				};
+				let operationHistory = [];
+				let memoryValue = 0;
 				let wasCalculated = false;
 
 				const operate = (leftOperand, rightOperand, operator) => {
-					console.log('leftOperand:', leftOperand);
-					console.log('rightOperand:', rightOperand);
-					console.log('operator:', operator);
-					console.log('typeof leftOperand:', typeof leftOperand);
-					console.log('typeof rightOperand:', typeof rightOperand);
-					console.log('typeof operator:', typeof operator);
-					const leftNumber = parseFloat(storedValue);
-					const rightNumber = parseFloat(currentValue);
+					if (!leftOperand || !rightOperand || !operator) {
+						throw new Error();
+					}
+
+					const leftNumber = parseFloat(leftOperand);
+					const rightNumber = parseFloat(rightOperand);
+					let result;
 
 					switch (operator) {
 						case '+':
-							return leftNumber + rightNumber;
+							result = leftNumber + rightNumber;
+							break;
 						case '-':
-							return leftNumber - rightNumber;
+							result = leftNumber - rightNumber;
+							break;
 						case '×':
-							return leftNumber * rightNumber;
+							result = leftNumber * rightNumber;
+							break;
 						case '÷':
 							if (rightNumber === 0) {
-								alert('Нельзя делить на 0');
-								return 0;
-							} else {
-								return leftNumber / rightNumber;
+								throw new Error('Нельзя делить на 0!');
 							}
+
+							result = leftNumber / rightNumber;
+							break;
 					}
+
+					return parseFloat(result.toFixed(8));
 				};
 
 				const handleDigit = (value) => {
-					if (currentOperator) {
-						currentValue = currentValue === '0' ? value : currentValue + value;
-						currentOperation.b = currentValue;
+					if (wasCalculated) {
+						currOperation.a = '';
+						currOperation.b = '';
+						currOperation.operator = '';
+						currOperation.result = '';
+						wasCalculated = false;
+					}
+
+					if (currOperation.operator) {
+						currOperation.b = currOperation.b === '0' ? value : currOperation.b + value;
+						prevOperation.b = currOperation.b;
 					} else if (wasCalculated) {
-						storedValue = value;
+						currOperation.a = value;
 						wasCalculated = false;
 					} else {
-						storedValue = storedValue === '0' ? value : storedValue + value;
-						currentOperation.a = storedValue;
+						currOperation.a = currOperation.a === '0' ? value : currOperation.a + value;
+						prevOperation.a = currOperation.a;
 					}
 
 					updateDisplay();
 				};
 
 				const updateDisplay = (value) => {
+					let displayText = '';
+
 					if (value) {
-						displayResultElement.textContent = value;
+						displayText = value;
 					} else {
-						displayResultElement.textContent = `${storedValue || currentOperation.result}${currentOperator}${currentValue}`;
+						displayText = `${currOperation.a}${currOperation.operator}${formatOperand(currOperation.b)}`;
 					}
 
-					testDisplay.textContent = `${currentOperation.a}${currentOperation.operator}${currentOperation.b}${currentOperation.result ? `=${currentOperation.result}` : ''}`;
+					mainDisplay.textContent = displayText;
+					historyDisplay.innerHTML = operationHistory.slice(0, 3).join('<br>');
+				};
+
+				const formatOperand = (operand) => {
+					return operand.startsWith('-') ? `(${operand})` : operand;
 				};
 
 				const handleOperatorChange = (value) => {
-					if (currentValue) {
+					if (operationUnfinished()) {
 						calculateResult();
 					}
 
-					currentOperator = value;
-					currentOperation.operator = currentOperator;
+					if (wasCalculated) {
+						currOperation.a = prevOperation.result;
+						currOperation.b = '';
+						wasCalculated = false;
+					}
+
+					currOperation.operator = value;
+					prevOperation.operator = currOperation.operator;
 					updateDisplay();
 				};
 
+				const operationUnfinished = () => {
+					return !wasCalculated && currOperation.a && currOperation.b && currOperation.operator;
+				};
+
 				const addDecimal = () => {
-					if (currentOperator) {
-						if (!currentValue.includes('.')) {
-							currentValue = currentValue === '' ? '0.' : currentValue + '.';
-							currentOperation.b = currentValue;
+					if (currOperation.operator) {
+						if (!currOperation.b.includes('.')) {
+							currOperation.b = currOperation.b === '' ? '0.' : currOperation.b + '.';
+							prevOperation.b = currOperation.b;
 						}
 					} else if (wasCalculated) {
-						storedValue = '0.';
+						currOperation.a = '0.';
 						wasCalculated = false;
-					} else if (!storedValue.includes('.')) {
-						storedValue = storedValue === '' ? '0.' : storedValue + '.';
-						currentOperation.a = storedValue;
+					} else if (!currOperation.a.includes('.')) {
+						currOperation.a = currOperation.a === '' ? '0.' : currOperation.a + '.';
+						prevOperation.a = currOperation.a;
 					}
 
+					updateDisplay();
+				};
+
+				const toggleSign = () => {
+					if (currOperation.b) {
+						currOperation.b = currOperation.b.startsWith('-') ? currOperation.b.substring(1) : `-${currOperation.b}`;
+					} else {
+						currOperation.a = currOperation.a.startsWith('-') ? currOperation.a.substring(1) : `-${currOperation.a}`;
+					}
 					updateDisplay();
 				};
 
 				const calculateResult = () => {
-					console.log('before calculateResult');
-					console.log(`
-					storedValue: ${storedValue}
-					currentValue: ${currentValue}
-					currentOperator: ${currentOperator}
-					`);
-					// console.log('currentValue:', currentValue);
-					// console.log('currentOperator:', currentOperator);
-					const result = operate(storedValue || currentOperation.result, currentValue || currentOperation.b, currentOperator || currentOperation.operator);
+					let result;
 
-					storedValue = '';
-					currentValue = '';
-					currentOperator = '';
-					console.log('currentOperation before', currentOperation);
-					currentOperation.result = String(result);
-					console.log('currentOperation after', currentOperation);
-					// currentResult = result;
+					try {
+						if (!wasCalculated) {
+							const operandB = currOperation.b === '' ? currOperation.a : currOperation.b;
+              
+							result = operate(currOperation.a, operandB, currOperation.operator);
+							operationHistory.unshift(`${currOperation.a}${currOperation.operator}${formatOperand(operandB)}=${formatOperand(String(result))}`);
+							prevOperation.a = currOperation.a;
+							prevOperation.b = operandB;
+							prevOperation.operator = currOperation.operator;
+						} else {
+							result = operate(currOperation.a, prevOperation.b, prevOperation.operator);
+							operationHistory.unshift(`${currOperation.a}${prevOperation.operator}${formatOperand(prevOperation.b)}=${formatOperand(String(result))}`);
+						}
+					} catch (error) {
+						if ((error.message = 'Недостаточно аргументов')) {
+							return;
+						}
+
+						mainDisplay.textContent = error.message;
+						return;
+					}
+
+					prevOperation.result = String(result);
+					currOperation.a = String(result);
+					currOperation.b = '';
+					currOperation.operator = '';
 					wasCalculated = true;
+
 					updateDisplay(result);
 				};
 
 				const clearAll = () => {
-					storedValue = '0';
-					currentValue = '';
-					currentOperator = '';
+					currOperation.a = '0';
+					currOperation.b = '';
+					currOperation.operator = '';
+					operationHistory = [];
 					updateDisplay();
 				};
+
+				const updateMemory = (type) => {
+					if (operationUnfinished()) {
+						calculateResult();
+					}
+
+					const updateOperator = type === 'M+' ? 1 : -1;
+
+					if (currOperation.b) {
+						memoryValue += parseFloat(currOperation.b) * updateOperator;
+					} else {
+						memoryValue += parseFloat(currOperation.a) * updateOperator;
+					}
+
+					memoryDisplay.textContent = memoryValue;
+				};
+
+				const memoryRecall = () => {
+					if (currOperation.operator) {
+						currOperation.b = String(memoryValue);
+					} else {
+						currOperation.a = String(memoryValue);
+						wasCalculated = false;
+					}
+
+					updateDisplay();
+				};
+
+        const memoryClear = () => {
+          memoryValue = 0;
+          memoryDisplay.textContent = parseFloat(memoryValue);
+        }
+
+        const undoTyping = () => {
+          const onlyMinusLeft = (operand) => {
+            return operand[operand.length - 1] === '-';
+          }
+
+          if (currOperation.b) {
+            currOperation.b = currOperation.b.slice(0, -1);
+
+            if (onlyMinusLeft(currOperation.b)) {
+              currOperation.b = '';
+            }
+          } else if (currOperation.operator) {
+            currOperation.operator = '';
+          } else {
+            if (currOperation.a === '0') {
+              return;
+            }
+
+            currOperation.a = currOperation.a.slice(0, -1);
+
+            if (onlyMinusLeft(currOperation.a)) {
+              currOperation.a = '0';
+            }
+          }
+
+          updateDisplay();
+        }
 
 				const handleClick = (event) => {
 					if (event.target.nodeName === 'BUTTON') {
 						const buttonText = event.target.textContent;
 
-						if (!isNaN(buttonText)) {
-							handleDigit(buttonText);
-						} else {
-							switch (buttonText) {
-								case '+':
-									handleOperatorChange('+');
-									break;
-								case '-':
-									handleOperatorChange('-');
-									break;
-								case '×':
-									handleOperatorChange('×');
-									break;
-								case '÷':
-									handleOperatorChange('÷');
-									break;
-								case '.':
-									addDecimal();
-									break;
-								case 'C':
-									clearAll();
-									break;
-								case '=':
-									calculateResult();
-									break;
-							}
+						switch (buttonText) {
+							case '+':
+							case '-':
+							case '×':
+							case '÷':
+								handleOperatorChange(buttonText);
+								break;
+							case '.':
+								addDecimal();
+								break;
+							case '+/-':
+								toggleSign();
+								break;
+							case 'C':
+								clearAll();
+								break;
+							case '=':
+								calculateResult();
+								break;
+							case 'M+':
+							case 'M-':
+								updateMemory(buttonText);
+								break;
+							case 'MR':
+								memoryRecall();
+								break;
+							case 'MC':
+								memoryClear();
+								break;
+              case '→':
+                undoTyping();
+                break;
+							default:
+								handleDigit(buttonText);
 						}
 					}
 				};
