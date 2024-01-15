@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Calculator</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+	</head>
+	<body class="bg-gray-100 flex items-center justify-center h-screen">
+		<div class="bg-white shadow-xl rounded-lg overflow-hidden" style="width: 375px">
+			<!-- Display -->
+			<div class="p-4 border-b">
+				<div id="display" class="text-right text-2xl">0</div>
+				<div class="text-right text-sm">M: 0</div>
+				<div id="test" class="text-right text-sm"></div>
+			</div>
+			<!-- Buttons -->
+			<div id="calculator-buttons" class="grid grid-cols-5 gap-2 p-4">
+				<!-- Row 1 -->
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">MC</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">MR</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">M-</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">M+</button>
+				<button class="col-span-1 bg-red-500 text-white rounded text-xl p-3">C</button>
+				<!-- Row 2 -->
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">7</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">8</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">9</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">÷</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">→</button>
+				<!-- Row 3 -->
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">4</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">5</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">6</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">×</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">+/-</button>
+				<!-- Row 4 -->
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">1</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">2</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">3</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">-</button>
+				<button class="row-span-2 bg-blue-600 text-white rounded text-xl p-3">=</button>
+				<!-- Row 5 -->
+				<button class="col-span-2 bg-gray-200 rounded text-xl p-3">0</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">.</button>
+				<button class="col-span-1 bg-gray-200 rounded text-xl p-3">+</button>
+				<!-- <button class="col-span-1 bg-blue-600 text-white rounded text-xl p-3">=</button> -->
+			</div>
+
+			<script>
+				const buttonsContainer = document.getElementById('calculator-buttons');
+				const displayResultElement = document.getElementById('display');
+				const testDisplay = document.getElementById('test');
+
+				let storedValue = '0';
+				let currentValue = '';
+				let currentOperator = '';
+				let currentResult = '';
+				const currentOperation = {
+					a: '',
+					b: '',
+					operator: '',
+					result: '',
+				};
+				const prevOperation = {
+					a: '',
+					b: '',
+					operator: '',
+					result: '',
+				};
+				let wasCalculated = false;
+
+				const operate = (leftOperand, rightOperand, operator) => {
+					console.log('leftOperand:', leftOperand);
+					console.log('rightOperand:', rightOperand);
+					console.log('operator:', operator);
+					console.log('typeof leftOperand:', typeof leftOperand);
+					console.log('typeof rightOperand:', typeof rightOperand);
+					console.log('typeof operator:', typeof operator);
+					const leftNumber = parseFloat(storedValue);
+					const rightNumber = parseFloat(currentValue);
+
+					switch (operator) {
+						case '+':
+							return leftNumber + rightNumber;
+						case '-':
+							return leftNumber - rightNumber;
+						case '×':
+							return leftNumber * rightNumber;
+						case '÷':
+							if (rightNumber === 0) {
+								alert('Нельзя делить на 0');
+								return 0;
+							} else {
+								return leftNumber / rightNumber;
+							}
+					}
+				};
+
+				const handleDigit = (value) => {
+					if (currentOperator) {
+						currentValue = currentValue === '0' ? value : currentValue + value;
+						currentOperation.b = currentValue;
+					} else if (wasCalculated) {
+						storedValue = value;
+						wasCalculated = false;
+					} else {
+						storedValue = storedValue === '0' ? value : storedValue + value;
+						currentOperation.a = storedValue;
+					}
+
+					updateDisplay();
+				};
+
+				const updateDisplay = (value) => {
+					if (value) {
+						displayResultElement.textContent = value;
+					} else {
+						displayResultElement.textContent = `${storedValue || currentOperation.result}${currentOperator}${currentValue}`;
+					}
+
+					testDisplay.textContent = `${currentOperation.a}${currentOperation.operator}${currentOperation.b}${currentOperation.result ? `=${currentOperation.result}` : ''}`;
+				};
+
+				const handleOperatorChange = (value) => {
+					if (currentValue) {
+						calculateResult();
+					}
+
+					currentOperator = value;
+					currentOperation.operator = currentOperator;
+					updateDisplay();
+				};
+
+				const addDecimal = () => {
+					if (currentOperator) {
+						if (!currentValue.includes('.')) {
+							currentValue = currentValue === '' ? '0.' : currentValue + '.';
+							currentOperation.b = currentValue;
+						}
+					} else if (wasCalculated) {
+						storedValue = '0.';
+						wasCalculated = false;
+					} else if (!storedValue.includes('.')) {
+						storedValue = storedValue === '' ? '0.' : storedValue + '.';
+						currentOperation.a = storedValue;
+					}
+
+					updateDisplay();
+				};
+
+				const calculateResult = () => {
+					console.log('before calculateResult');
+					console.log(`
+					storedValue: ${storedValue}
+					currentValue: ${currentValue}
+					currentOperator: ${currentOperator}
+					`);
+					// console.log('currentValue:', currentValue);
+					// console.log('currentOperator:', currentOperator);
+					const result = operate(storedValue || currentOperation.result, currentValue || currentOperation.b, currentOperator || currentOperation.operator);
+
+					storedValue = '';
+					currentValue = '';
+					currentOperator = '';
+					console.log('currentOperation before', currentOperation);
+					currentOperation.result = String(result);
+					console.log('currentOperation after', currentOperation);
+					// currentResult = result;
+					wasCalculated = true;
+					updateDisplay(result);
+				};
+
+				const clearAll = () => {
+					storedValue = '0';
+					currentValue = '';
+					currentOperator = '';
+					updateDisplay();
+				};
+
+				const handleClick = (event) => {
+					if (event.target.nodeName === 'BUTTON') {
+						const buttonText = event.target.textContent;
+
+						if (!isNaN(buttonText)) {
+							handleDigit(buttonText);
+						} else {
+							switch (buttonText) {
+								case '+':
+									handleOperatorChange('+');
+									break;
+								case '-':
+									handleOperatorChange('-');
+									break;
+								case '×':
+									handleOperatorChange('×');
+									break;
+								case '÷':
+									handleOperatorChange('÷');
+									break;
+								case '.':
+									addDecimal();
+									break;
+								case 'C':
+									clearAll();
+									break;
+								case '=':
+									calculateResult();
+									break;
+							}
+						}
+					}
+				};
+
+				buttonsContainer.addEventListener('click', handleClick);
+			</script>
+		</div>
+	</body>
+</html>
