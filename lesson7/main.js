@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 		}
 
 		mainDisplay.textContent = displayText;
-		historyDisplay.innerHTML = operationHistory.slice(0, 3).join('<br>');
+		historyDisplay.innerHTML = operationHistory.join('<br>');
 	};
 
 	const formatOperand = (operand) => {
